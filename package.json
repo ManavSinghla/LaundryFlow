@@ -3,13 +3,14 @@
   "version": "1.0.0",
   "description": "Dry Cleaning Shop Management System",
   "scripts": {
-    "dev:server": "cd server && npx -y nodemon server.js",
-    "dev:client": "cd client && npm run dev",
+    "dev:server": "cd LaundryFlowServer && npx -y nodemon server.js",
+    "dev:client": "cd LaundryFlowClient && npm run dev",
     "dev": "npx -y concurrently \"npm run dev:server\" \"npm run dev:client\""
   },
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "concurrently": "^8.2.2"
+    "concurrently": "^8.2.2",
+    "mammoth": "^1.12.0"
   }
 }

@@ -1,0 +1,426 @@
+PRODUCT REQUIREMENTS DOCUMENT
+
+Dry Clean Shop Billing System
+
+Web-based POS that replaces paper bills, generates printable invoices, and auto-sends them to customers via WhatsApp/SMS.
+
+Version 1.0  |  Stack: MERN  |  Target: Single-store MVP
+
+
+
+1. Problem Statement
+
+Currently, all customer billing is done on paper. This creates issues with bill loss, no record keeping, inability to track orders, and no way to send customers a copy of their bill. The goal is to digitize the entire billing workflow while keeping it simple enough to use at the counter.
+
+
+
+Core objectives:
+
+Replace paper bills with digital bill creation and one-click print
+
+Auto-send bill to customer WhatsApp or SMS after creation
+
+Track all orders (pending, ready, delivered) from a dashboard
+
+Maintain a customer database with order history
+
+Generate basic daily/monthly revenue reports
+
+
+
+2. User Flow
+
+
+
+Step
+
+Action
+
+Details
+
+01 — Intake
+
+Customer drops clothes
+
+Log items, quantities, and services required
+
+02 — Bill
+
+Generate bill
+
+Auto-calculate totals, assign unique order ID
+
+03 — Send
+
+Notify customer
+
+WhatsApp / SMS with bill summary and pickup ETA
+
+04 — Print
+
+Print for counter
+
+A4 or thermal 58mm print copy for shop records
+
+05 — Pickup
+
+Mark delivered
+
+Update order status, record payment mode and amount
+
+
+
+3. Features (MoSCoW Prioritization)
+
+
+
+Must Have
+
+[MUST]  Bill Generator — Select customer, add clothes (type, qty, service), auto-compute total. Assign unique order ID (e.g. DC-2025-0042).
+
+[MUST]  Print Invoice — Print-ready A4 and 58mm thermal layout using CSS @media print. Include shop logo, order ID, itemised list, total, date & expected delivery.
+
+[MUST]  WhatsApp / SMS Notification — After bill creation, auto-send message to customer mobile via Twilio. Message includes order ID, item summary, total, and pickup ETA.
+
+[MUST]  Customer Management — Save customer name, mobile, address. Auto-suggest existing customer on phone number input.
+
+[MUST]  Order Status Tracker — Status pipeline: Received → In Process → Ready → Delivered. Notify customer on status change.
+
+
+
+Should Have
+
+[SHOULD]  Service Price Catalogue — Admin-editable list of services (Wash, Dry Clean, Iron, Steam Press) with per-garment prices for auto-calculation.
+
+[SHOULD]  Payment Tracking — Mark bill as Paid / Partial / Unpaid. Record payment mode (Cash, UPI, Card). Show outstanding balance per order.
+
+[SHOULD]  Dashboard & Reports — Today's orders, total revenue, pending pickups. Monthly revenue chart. Export daily report as PDF or CSV.
+
+
+
+Could Have
+
+[COULD]  Customer Self-Serve — Customer logs in via OTP on mobile to view past bills and current order status without app install.
+
+[COULD]  QR Code on Bill — QR code printed on bill opens order status page for easy customer tracking.
+
+
+
+4. Bill Data Model
+
+
+
+Field
+
+Type
+
+Notes
+
+orderId
+
+String
+
+Auto-generated: DC-YYYY-NNNN
+
+customer
+
+ObjectId → Customer
+
+Ref to customer collection
+
+items
+
+Array
+
+{garment, service, qty, unitPrice, subtotal}
+
+totalAmount
+
+Number
+
+Computed from items array
+
+discount
+
+Number
+
+Rupee amount or percentage — optional
+
+status
+
+Enum
+
+received | processing | ready | delivered
+
+paymentStatus
+
+Enum
+
+unpaid | partial | paid
+
+paymentMode
+
+Enum
+
+cash | upi | card
+
+deliveryDate
+
+Date
+
+Expected pickup date shown on bill
+
+notificationSent
+
+Boolean
+
+WhatsApp/SMS sent flag
+
+createdAt
+
+Date
+
+Auto timestamp on creation
+
+
+
+5. Tech Stack
+
+
+
+Layer
+
+Technology
+
+Reason
+
+Frontend
+
+React + Vite
+
+Fast SPA, component reuse for bill form and print view
+
+UI
+
+Tailwind CSS
+
+Rapid styling, print-specific utility classes
+
+Backend
+
+Node.js + Express
+
+REST API, Twilio webhook handler
+
+Database
+
+MongoDB Atlas
+
+Flexible schema for garment items array
+
+Auth
+
+JWT + bcrypt
+
+Single admin login for shop owner
+
+Notifications
+
+Twilio API
+
+WhatsApp Business + SMS fallback
+
+Print / PDF
+
+React-to-Print
+
+CSS @media print — no server PDF generation needed
+
+Hosting
+
+Vercel + Railway
+
+Frontend on Vercel, backend and DB on Railway/Atlas
+
+
+
+6. Notification API Design
+
+WhatsApp Message via Twilio
+
+Endpoint: POST /api/bills/:id/notify
+
+Triggered automatically after bill creation. Sends a pre-approved WhatsApp template:
+
+
+
+"Hello [Name], your dry cleaning order [DC-2025-0042] has been received. Items: 2x Shirt (Wash+Iron), 1x Suit (Dry Clean). Total: ₹450. Expected ready by [Date]. – [Shop Name]"
+
+
+
+Note: Twilio WhatsApp requires a pre-approved message template for business-initiated messages. Register at twilio.com/whatsapp. Use Twilio SMS for immediate setup with no approval needed.
+
+
+
+Status Update Notification
+
+Endpoint: POST /api/orders/:id/status
+
+When status changes to 'ready', automatically trigger a second notification: "Your order [DC-2025-0042] is ready for pickup!"
+
+
+
+7. Print Layout Specification
+
+
+
+Element
+
+Details
+
+Header
+
+Shop name, address, phone, GST number (if applicable)
+
+Order Info
+
+Order ID, date created, expected delivery date
+
+Customer Info
+
+Customer name and mobile number
+
+Items Table
+
+Garment | Service | Qty | Unit Price | Subtotal
+
+Totals Block
+
+Subtotal, Discount, Grand Total, Amount Paid, Balance Due
+
+Footer
+
+Thank you message + QR code linking to order status (optional)
+
+Print Trigger
+
+React-to-Print library. CSS @media print hides nav and buttons.
+
+Paper Size
+
+A4 (default). Add 58mm thermal CSS variant for POS printers.
+
+
+
+8. Phased Delivery Plan
+
+
+
+Phase
+
+Timeline
+
+Deliverables
+
+Phase 1 — Foundation
+
+Week 1–2
+
+Admin auth · Customer CRUD · Service price catalogue · Bill creation form · A4 print view
+
+Phase 2 — Notifications
+
+Week 3
+
+Twilio WhatsApp/SMS integration · Order status tracker · Ready-for-pickup notification
+
+Phase 3 — Reporting
+
+Week 4
+
+Dashboard with daily stats · Payment status tracking · Monthly revenue chart · CSV/PDF export
+
+Phase 4 — Enhancements
+
+Post-MVP
+
+Customer OTP login for bill history · QR codes on bills · 58mm thermal print · Multi-branch support
+
+
+
+9. Risks & Mitigations
+
+
+
+Risk
+
+Level
+
+Mitigation
+
+Twilio WhatsApp template approval delay
+
+High
+
+Start with Twilio SMS (no approval). Apply for WhatsApp Business in parallel.
+
+No internet at shop counter
+
+High
+
+Use local network with backend on LAN machine. Offline PWA as future enhancement.
+
+Wrong phone number entered
+
+Medium
+
+Add phone confirmation step before sending. Show WhatsApp message preview.
+
+Print formatting varies by browser
+
+Medium
+
+Test @media print in Chrome. Use mm units in print CSS, not px.
+
+MongoDB Atlas free tier limits
+
+Low
+
+Atlas free (512MB) handles years of data. Upgrade to M2 ($9/mo) if needed.
+
+
+
+10. Success Metrics
+
+
+
+Metric
+
+Target
+
+Time to create and print a bill
+
+Under 60 seconds at counter
+
+WhatsApp delivery rate
+
+95%+ when phone number is correct
+
+Paper bills used per month
+
+Zero after go-live
+
+Order lookup time
+
+Under 5 seconds by name or phone
+
+System uptime during shop hours
+
+99%+ (10am–8pm daily)
+
+
+
+
+
+Dry Clean Shop Billing System — PRD v1.0  |  Prepared for MERN Stack Development
+
